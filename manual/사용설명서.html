@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사진 형식 바꾸기 사용 설명서</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f2f4f6; --text: #191f28; --text-sub: #6b7684; --line: #e5e8eb;
+    --primary: #3182f6; --dim: rgba(25, 31, 40, 0.45);
+    --slide-w: 1280px; --slide-h: 720px;
+  }
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: #d9dde2; color: var(--text);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+    line-height: 1.5; word-break: keep-all;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  h1, h2, h3, p { margin: 0; }
+  #deck { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px 0; }
+  .slide {
+    position: relative; width: var(--slide-w); height: var(--slide-h);
+    background: var(--bg); overflow: hidden; flex: none;
+    zoom: var(--zoom, 1);
+  }
+  @media print {
+    body { background: none; }
+    #deck { display: block; padding: 0; }
+    .slide { zoom: 1; break-after: page; page-break-after: always; }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+  }
+
+  /* 공통 머리·꼬리 */
+  .head { position: absolute; left: 48px; right: 48px; top: 36px; }
+  .eyebrow { font-size: 18px; font-weight: 700; color: var(--primary); }
+  .head h2 { font-size: 32px; font-weight: 700; line-height: 1.4; margin-top: 2px; }
+  .foot {
+    position: absolute; left: 48px; right: 48px; bottom: 20px;
+    display: flex; justify-content: space-between; font-size: 14px; color: var(--text-sub);
+  }
+
+  /* 화면 캡처 틀 */
+  .frame {
+    position: absolute; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 16px; background: var(--bg);
+  }
+  .frame img { position: absolute; display: block; max-width: none; }
+  .hl {
+    position: absolute; border: 4px solid var(--primary); border-radius: 12px;
+    box-shadow: 0 0 0 4000px var(--dim);
+  }
+  .overlay { position: absolute; inset: 0; pointer-events: none; }
+  .badge {
+    position: absolute; width: 36px; height: 36px; border-radius: 50%;
+    background: var(--primary); color: #fff; border: 3px solid #fff;
+    display: grid; place-items: center; font-size: 18px; font-weight: 700; line-height: 1;
+  }
+
+  /* 설명 라벨 */
+  .label {
+    position: absolute; width: 360px;
+    border: 2px solid var(--primary); border-radius: 16px; background: var(--bg);
+    padding: 24px;
+  }
+  .label-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .label .num {
+    flex: none; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--primary); color: #fff; display: grid; place-items: center;
+    font-size: 16px; font-weight: 700;
+  }
+  .label h3 { font-size: 24px; font-weight: 700; line-height: 1.35; }
+  .label p { font-size: 18px; line-height: 1.6; }
+  .label p + p { margin-top: 8px; }
+  .tip {
+    margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: var(--bg-soft);
+    font-size: 16px; line-height: 1.6;
+  }
+  .tip b { display: block; font-size: 14px; color: var(--text-sub); margin-bottom: 2px; }
+
+  /* 표지 */
+  .cover .left { position: absolute; left: 72px; top: 0; bottom: 0; width: 520px; display: flex; flex-direction: column; justify-content: center; }
+  .cover .tag { font-size: 20px; font-weight: 700; color: var(--primary); }
+  .cover h1 { font-size: 56px; font-weight: 800; line-height: 1.3; margin-top: 12px; }
+  .cover .sub { font-size: 22px; color: var(--text-sub); margin-top: 20px; line-height: 1.6; }
+  .cover .meta { font-size: 16px; color: var(--text-sub); margin-top: 48px; }
+  .cover .side { position: absolute; right: 0; top: 0; bottom: 0; width: 600px; background: var(--bg-soft); }
+
+  /* 글 슬라이드 */
+  .steps { position: absolute; left: 48px; top: 144px; width: 640px; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .steps li { display: flex; gap: 16px; align-items: flex-start; padding: 12px 20px; border: 1px solid var(--line); border-radius: 16px; }
+  .steps .n { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--bg-soft); display: grid; place-items: center; font-weight: 700; font-size: 18px; }
+  .steps h3 { font-size: 22px; font-weight: 700; }
+  .steps p { font-size: 17px; color: var(--text-sub); margin-top: 2px; }
+  .note { position: absolute; left: 736px; right: 48px; top: 148px; display: flex; flex-direction: column; gap: 16px; }
+  .note .box { border-radius: 16px; background: var(--bg-soft); padding: 24px; }
+  .note h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .note p { font-size: 18px; line-height: 1.6; }
+  .note p + p { margin-top: 8px; }
+  .faq { position: absolute; left: 48px; right: 48px; top: 148px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .faq .q { border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+  .faq h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .faq p { font-size: 18px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="deck"></div>
+
+<script src="images/shots.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TITLE = '사진 형식 바꾸기 사용 설명서';
+
+  /* 슬라이드 내용: 바운딩 박스 하나에 설명 하나 */
+  var SLIDES = [
+    { type: 'cover' },
+    { type: 'start' },
+
+    { sec: '2. 사진 올리기', head: '처음 화면 살펴보기', shot: 'empty', box: 'header',
+      title: '화면 이름과 안내',
+      desc: ['이 서비스는 사진의 형식과 크기를 바꿔요.', '사진은 내 기기 안에서만 바뀌어요. 인터넷으로 보내지 않아요.'] },
+    { sec: '2. 사진 올리기', head: '처음 화면 살펴보기', shot: 'empty', box: 'drop',
+      title: '사진을 끌어다 놓는 곳',
+      desc: ['폴더에서 사진을 끌어 이 칸 위에 놓으면 올라가요.', '여러 장을 한 번에 놓아도 돼요.'],
+      tip: '화면 어디에 놓아도 올라가요.' },
+    { sec: '2. 사진 올리기', head: '처음 화면 살펴보기', shot: 'empty', box: 'pick',
+      title: '사진 고르기 버튼',
+      desc: ['누르면 사진을 고르는 창이 열려요.', '여러 장을 함께 골라도 돼요.'],
+      tip: 'Ctrl 키를 누른 채로 누르면 여러 장을 고를 수 있어요. 맥에서는 command 키예요.' },
+
+    { sec: '3. 바꾸는 방법 고르기', head: '사진을 올린 뒤의 화면', shot: 'added', box: 'card',
+      title: '올린 사진 카드',
+      desc: ['올린 사진마다 카드가 하나씩 생겨요.', '파일 이름과 지금 크기, 진행 상태가 보여요.'] },
+    { sec: '3. 바꾸는 방법 고르기', head: '사진을 올린 뒤의 화면', shot: 'added', box: 'remove',
+      title: '사진 빼기 버튼',
+      desc: ['× 표시를 누르면 이 사진만 목록에서 빠져요.', '내 기기에 있는 원래 파일은 지워지지 않아요.'] },
+    { sec: '3. 바꾸는 방법 고르기', head: '사진을 올린 뒤의 화면', shot: 'added', box: 'listActions',
+      title: '사진 더 올리기와 모두 빼기',
+      desc: ['사진 더 올리기를 누르면 사진을 더 고를 수 있어요.', '모두 빼기를 누르면 목록이 비고 처음 화면으로 돌아가요.'] },
+    { sec: '3. 바꾸는 방법 고르기', head: '사진을 올린 뒤의 화면', shot: 'added', box: 'format',
+      title: '바꿀 형식 고르기',
+      desc: ['JPG, PNG, WebP 가운데 하나를 눌러요.', '처음에는 JPG가 골라져 있어요. 고른 형식에는 체크 표시가 붙어요.'],
+      tip: 'JPG는 사진에, PNG는 투명한 그림에 잘 맞아요. WebP는 용량이 작아요.' },
+    { sec: '3. 바꾸는 방법 고르기', head: '사진을 올린 뒤의 화면', shot: 'added', box: 'width',
+      title: '가로 크기 넣기',
+      desc: ['숫자를 넣으면 가로가 그 크기로 줄어요.', '세로는 비율에 맞춰 함께 줄어요. 비워 두면 원래 크기 그대로예요.'],
+      tip: '원래보다 큰 숫자를 넣으면 원래 크기로 둬요.' },
+    { sec: '3. 바꾸는 방법 고르기', head: '사진을 올린 뒤의 화면', shot: 'added', box: 'convert',
+      title: '사진 바꾸기 버튼',
+      desc: ['올린 사진을 모두 한 번에 바꿔요.', '바꾸는 동안에는 버튼 글자가 "바꾸는 중이에요"로 바뀌어요.'] },
+
+    { sec: '4. 바꾸고 내려받기', head: '다 바꾼 뒤의 화면', shot: 'converted', box: 'summary',
+      title: '다 바꿨다는 안내',
+      desc: ['몇 장을 바꿨는지 알려 줘요.', '초록 체크 표시가 붙으면 다 바뀐 거예요.'] },
+    { sec: '4. 바꾸고 내려받기', head: '다 바꾼 뒤의 화면', shot: 'converted', box: 'status',
+      title: '사진마다 바뀐 결과',
+      desc: ['어떤 형식으로 바뀌었는지 보여 줘요.', '바뀐 가로와 세로 크기도 함께 보여요.'] },
+    { sec: '4. 바꾸고 내려받기', head: '다 바꾼 뒤의 화면', shot: 'converted', box: 'download',
+      title: '내려받기 버튼',
+      desc: ['누르면 바뀐 사진이 내 기기에 저장돼요.', '보통 다운로드 폴더에 들어가요. 사진마다 하나씩 눌러요.'],
+      tip: '형식이나 가로 크기를 고치면 사진 바꾸기를 다시 눌러야 해요.' },
+
+    { sec: '5. 이럴 땐 이렇게', head: '사진이 아닌 파일을 올렸을 때', shot: 'error', box: 'alert',
+      title: '사진만 올릴 수 있다는 안내',
+      desc: ['사진이 아닌 파일은 빼 두고 알려 줘요.', '어떤 파일이 빠졌는지 이름이 보여요.'] },
+    { sec: '5. 이럴 땐 이렇게', head: '사진이 아닌 파일을 올렸을 때', shot: 'error', box: 'alertActions',
+      title: '사진 다시 고르기와 닫기',
+      desc: ['사진 다시 고르기를 누르면 사진을 고르는 창이 바로 열려요.', '닫기를 누르면 안내가 사라져요.'] },
+    { sec: '5. 이럴 땐 이렇게', head: '가로 크기를 잘못 넣었을 때', shot: 'widtherr', box: 'widthErr',
+      title: '가로 크기 칸 안내',
+      desc: ['숫자가 아닌 글자를 넣으면 칸 테두리가 빨갛게 바뀌어요.', '칸 바로 아래에 고치는 방법이 나와요.'],
+      tip: '1200처럼 숫자만 넣어 주세요.' },
+
+    { sec: '6. 휴대폰에서 쓰기', head: '휴대폰 화면', shot: 'mobile', box: 'settings',
+      title: '바꾸는 방법은 위에 있어요',
+      desc: ['휴대폰에서는 위에서 아래로 한 줄로 보여요.', '형식과 가로 크기를 고르고 사진 바꾸기를 눌러요.'] },
+    { sec: '6. 휴대폰에서 쓰기', head: '휴대폰 화면', shot: 'mobile', box: 'list',
+      title: '올린 사진은 아래에 있어요',
+      desc: ['화면을 내리면 올린 사진이 보여요.', '사진마다 내려받기를 누르면 휴대폰에 저장돼요.'] },
+
+    { type: 'faq' }
+  ];
+
+  var counter = {};
+  SLIDES.forEach(function (d) { if (d.shot) { var k = d.shot + '|' + d.head; counter[k] = (counter[k] || 0) + 1; d.n = counter[k]; } });
+
+  var deck = document.getElementById('deck');
+  var total = SLIDES.length;
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function foot(i) { return '<div class="foot"><span>' + TITLE + '</span><span>' + (i + 1) + ' / ' + total + '</span></div>'; }
+
+  /* 캡처 틀: 화면 전체 또는 상자 둘레를 잘라서 보여 줘요 */
+  var STAGE = { x: 48, y: 136, w: 760, h: 528 };
+  var PAD = 8;
+
+  function frameFor(shot, box, stage) {
+    var s = Math.min(1, stage.w / shot.w, stage.h / shot.h);
+    s = Math.max(s, 0.85);
+    if (box) s = Math.min(s, (stage.w - 24) / (box[2] + PAD * 2), (stage.h - 24) / (box[3] + PAD * 2));
+    var fw = Math.min(stage.w, shot.w * s), fh = Math.min(stage.h, shot.h * s);
+    var ox = 0, oy = 0;
+    if (box) {
+      var cx = (box[0] + box[2] / 2) * s, cy = (box[1] + box[3] / 2) * s;
+      ox = Math.max(0, Math.min(cx - fw / 2, shot.w * s - fw));
+      oy = Math.max(0, Math.min(cy - fh / 2, shot.h * s - fh));
+    }
+    return { s: s, fw: fw, fh: fh, ox: ox, oy: oy, fx: stage.x, fy: stage.y + (stage.h - fh) / 2 };
+  }
+
+  function buildFrame(slide, shot, f) {
+    var frame = el('div', 'frame');
+    frame.style.cssText = 'left:' + f.fx + 'px;top:' + f.fy + 'px;width:' + f.fw + 'px;height:' + f.fh + 'px;';
+    var img = el('img');
+    img.src = shot.src; img.alt = '';
+    img.style.cssText = 'left:' + (-f.ox) + 'px;top:' + (-f.oy) + 'px;width:' + (shot.w * f.s) + 'px;height:' + (shot.h * f.s) + 'px;';
+    frame.appendChild(img);
+    slide.appendChild(frame);
+    return frame;
+  }
+
+  function boxSlide(d, i) {
+    var slide = el('section', 'slide');
+    var shot = SHOTS[d.shot], b = shot.boxes[d.box];
+    var f = frameFor(shot, b, STAGE);
+    slide.innerHTML = '<div class="head"><p class="eyebrow">' + esc(d.sec) + '</p><h2>' + esc(d.head) + '</h2></div>' + foot(i);
+    var frame = buildFrame(slide, shot, f);
+
+    // 바운딩 박스 (틀 안 좌표)
+    var bx = b[0] * f.s - f.ox - PAD, by = b[1] * f.s - f.oy - PAD;
+    var bw = b[2] * f.s + PAD * 2, bh = b[3] * f.s + PAD * 2;
+    var hl = el('div', 'hl');
+    hl.style.cssText = 'left:' + bx + 'px;top:' + by + 'px;width:' + bw + 'px;height:' + bh + 'px;';
+    frame.appendChild(hl);
+
+    // 슬라이드 좌표로 바꾼 상자 위치
+    var L = f.fx + bx, T = f.fy + by, R = L + bw, B = T + bh;
+    var visR = Math.min(R, f.fx + f.fw - 2);
+    var midY = (Math.max(T, f.fy) + Math.min(B, f.fy + f.fh)) / 2;
+
+    // 설명 라벨: 캡처 바로 옆
+    var labelX = f.fx + f.fw + 48;
+    var label = el('div', 'label');
+    var html = '<div class="label-top"><span class="num">' + d.n + '</span><h3>' + esc(d.title) + '</h3></div>';
+    d.desc.forEach(function (p) { html += '<p>' + esc(p) + '</p>'; });
+    if (d.tip) html += '<div class="tip"><b>알아 두면 좋아요</b>' + esc(d.tip) + '</div>';
+    label.innerHTML = html;
+    label.style.left = labelX + 'px';
+    label.style.width = Math.min(440, 1280 - 48 - labelX) + 'px';
+    slide.appendChild(label);
+
+    slide._place = function () {
+      var lh = label.offsetHeight;
+      var top = Math.max(STAGE.y, Math.min(midY - lh / 2, STAGE.y + STAGE.h - lh));
+      label.style.top = top + 'px';
+      var ay = Math.max(top + 28, Math.min(midY, top + lh - 28));
+      var ov = el('div', 'overlay');
+      ov.innerHTML =
+        '<svg width="1280" height="720" style="position:absolute;left:0;top:0" aria-hidden="true">' +
+          '<path d="M' + visR + ' ' + midY + ' C ' + (visR + 28) + ' ' + midY + ', ' + (labelX - 28) + ' ' + ay + ', ' + labelX + ' ' + ay + '" fill="none" stroke="#3182f6" stroke-width="3"/>' +
+          '<circle cx="' + visR + '" cy="' + midY + '" r="6" fill="#3182f6" stroke="#fff" stroke-width="2"/>' +
+        '</svg>';
+      var badge = el('div', 'badge', String(d.n));
+      var bxL = Math.max(f.fx + 4, Math.min(L - 14, f.fx + f.fw - 40));
+      var byT = Math.max(f.fy + 4, Math.min(T - 14, f.fy + f.fh - 40));
+      badge.style.cssText = 'left:' + bxL + 'px;top:' + byT + 'px;';
+      ov.appendChild(badge);
+      slide.appendChild(ov);
+    };
+    return slide;
+  }
+
+  function cover(i) {
+    var slide = el('section', 'slide cover');
+    slide.innerHTML =
+      '<div class="left">' +
+        '<p class="tag">사용 설명서</p>' +
+        '<h1>사진 형식 바꾸기</h1>' +
+        '<p class="sub">사진을 JPG, PNG, WebP로 바꾸고<br>가로 크기를 줄여서 내려받는 방법을 알려 드려요.</p>' +
+        '<p class="meta">2026년 11월 · 사진은 내 기기 안에서만 바뀌어요</p>' +
+      '</div><div class="side"></div>';
+    var shot = SHOTS.converted;
+    var stage = { x: 680 + 40, y: 120, w: 520, h: 480 };
+    var f = frameFor(shot, null, stage);
+    f.s = Math.min(stage.w / shot.w, stage.h / shot.h); f.fw = shot.w * f.s; f.fh = shot.h * f.s;
+    f.fx = 680 + (600 - f.fw) / 2; f.fy = (720 - f.fh) / 2; f.ox = 0; f.oy = 0;
+    buildFrame(slide, shot, f);
+    return slide;
+  }
+
+  function start(i) {
+    var slide = el('section', 'slide');
+    var steps = [
+      ['파일 열기', 'index.html 파일을 두 번 눌러 열어요.'],
+      ['사진 올리기', '사진을 끌어다 놓거나 사진 고르기를 눌러요.'],
+      ['형식과 크기 고르기', 'JPG, PNG, WebP 중 하나를 고르고 가로 크기를 넣어요.'],
+      ['사진 바꾸기', '파란 사진 바꾸기 버튼을 눌러요.'],
+      ['내려받기', '사진마다 내려받기를 눌러 저장해요.']
+    ];
+    var html = '<div class="head"><p class="eyebrow">1. 시작하기</p><h2>다섯 단계면 끝나요</h2></div><ol class="steps">';
+    steps.forEach(function (s, k) { html += '<li><span class="n">' + (k + 1) + '</span><div><h3>' + s[0] + '</h3><p>' + s[1] + '</p></div></li>'; });
+    html += '</ol><div class="note">' +
+      '<div class="box"><h3>설치할 것은 없어요</h3><p>크롬, 엣지, 사파리 같은 인터넷 브라우저만 있으면 돼요.</p><p>컴퓨터와 휴대폰에서 모두 쓸 수 있어요.</p></div>' +
+      '<div class="box"><h3>사진은 밖으로 나가지 않아요</h3><p>사진은 내 기기 안에서만 바뀌어요.</p><p>어디로도 보내지 않아서 안심하고 써도 돼요.</p></div>' +
+      '</div>' + foot(i);
+    slide.innerHTML = html;
+    return slide;
+  }
+
+  function faq(i) {
+    var slide = el('section', 'slide');
+    var qs = [
+      ['바꾼 사진은 어디에 있어요?', '보통 다운로드 폴더에 저장돼요. 브라우저 설정에 따라 저장할 곳을 묻기도 해요.'],
+      ['JPG로 바꾸면 투명한 부분은 어떻게 돼요?', 'JPG는 투명한 부분을 담지 못해요. 그래서 흰색으로 채워져요. 투명하게 두려면 PNG를 골라요.'],
+      ['원래 사진이 바뀌거나 지워지나요?', '아니요. 원래 사진은 그대로 있어요. 바뀐 사진은 새 파일로 따로 저장돼요.'],
+      ['WebP로 바꿀 수 없다고 나와요', '오래된 브라우저에서는 WebP를 만들지 못해요. 크롬이나 엣지로 열거나 다른 형식을 골라요.']
+    ];
+    var html = '<div class="head"><p class="eyebrow">7. 자주 묻는 질문</p><h2>궁금한 점을 모았어요</h2></div><div class="faq">';
+    qs.forEach(function (q) { html += '<div class="q"><h3>' + q[0] + '</h3><p>' + q[1] + '</p></div>'; });
+    html += '</div>' + foot(i);
+    slide.innerHTML = html;
+    return slide;
+  }
+
+  var built = SLIDES.map(function (d, i) {
+    var s = d.type === 'cover' ? cover(i) : d.type === 'start' ? start(i) : d.type === 'faq' ? faq(i) : boxSlide(d, i);
+    s.setAttribute('aria-label', (i + 1) + '번째 장');
+    deck.appendChild(s);
+    return s;
+  });
+
+  function placeAll() { built.forEach(function (s) { if (s._place) s._place(); }); fit(); document.body.setAttribute('data-ready', '1'); }
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(placeAll);
+
+  function fit() {
+    var z = Math.min(1, (window.innerWidth - 32) / 1280);
+    document.documentElement.style.setProperty('--zoom', z);
+  }
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
