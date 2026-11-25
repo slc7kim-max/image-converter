@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사진 형식 바꾸기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f2f4f6;
+    --text: #191f28;
+    --text-sub: #6b7684;
+    --line: #e5e8eb;
+    --primary: #3182f6;
+    --danger: #f04452;
+    --success: #03b26c;
+    --fs-title: 1.625rem;   /* 26px */
+    --fs-sub: 1.25rem;      /* 20px */
+    --fs-body: 1rem;        /* 16px */
+    --fs-btn-lg: 1.125rem;  /* 18px */
+    --fs-small: 0.8125rem;  /* 13px */
+    --r-card: 16px;
+    --r-btn-lg: 12px;
+    --r-sm: 8px;
+    --dur: 150ms;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", sans-serif;
+    font-size: var(--fs-body);
+    line-height: 1.5;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  h1, h2, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  header { margin-bottom: 20px; }
+  h1 { font-size: var(--fs-title); font-weight: 700; line-height: 1.5; }
+  h2 { font-size: var(--fs-sub); font-weight: 700; line-height: 1.5; }
+  .small { font-size: var(--fs-small); line-height: 1.5; color: var(--text-sub); }
+  .lead { color: var(--text-sub); margin-top: 4px; }
+
+  .layout { display: grid; gap: 16px; }
+  .layout.has-items { grid-template-columns: 1fr; }
+  @media (min-width: 840px) {
+    .layout.has-items { grid-template-columns: 320px 1fr; align-items: start; }
+    .layout.has-items .settings { position: sticky; top: 16px; }
+  }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    padding: 20px 16px;
+  }
+  @media (min-width: 600px) { .card { padding: 24px; } }
+
+  /* 버튼 */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 44px; min-width: 44px;
+    border: 0; cursor: pointer;
+    transition: background-color var(--dur) ease, transform var(--dur) ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:focus-visible, .seg button:focus-visible, .input:focus-visible {
+    outline: 3px solid var(--text); outline-offset: 2px;
+  }
+  .btn-primary {
+    width: 100%; height: 52px; padding: 0 20px;
+    border-radius: var(--r-btn-lg);
+    background: var(--primary); color: #ffffff;
+    font-size: var(--fs-btn-lg); font-weight: 700;
+  }
+  .btn-primary:hover { background: #1b64da; }
+  .btn-primary[aria-disabled="true"] { cursor: progress; background: #1b64da; }
+  .btn-sub {
+    height: 40px; min-height: 44px; padding: 0 16px;
+    border-radius: var(--r-sm);
+    background: var(--bg-soft); color: var(--text);
+    font-size: var(--fs-body); font-weight: 600;
+  }
+  .btn-sub:hover { background: var(--line); }
+  .btn-icon {
+    width: 44px; height: 44px; padding: 0;
+    border-radius: var(--r-sm);
+    background: transparent; color: var(--text-sub);
+  }
+  .btn-icon:hover { background: var(--bg-soft); color: var(--text); }
+  .btn svg { flex: none; }
+
+  /* 빈 화면 */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    gap: 12px;
+    padding: 48px 16px;
+    border: 2px dashed var(--line);
+    border-radius: var(--r-card);
+    transition: border-color var(--dur) ease, background-color var(--dur) ease;
+  }
+  .empty .icon {
+    width: 64px; height: 64px; border-radius: 16px;
+    display: grid; place-items: center;
+    background: var(--bg-soft); color: var(--text-sub);
+  }
+  .empty .btn-primary { max-width: 320px; margin-top: 8px; }
+  body.dragging .empty, body.dragging .list-wrap { border-color: var(--text-sub); background: var(--bg-soft); }
+
+  /* 오류 상자 */
+  .alert {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 16px; margin-bottom: 12px;
+    border: 2px solid var(--danger);
+    border-radius: var(--r-card);
+    background: var(--bg);
+  }
+  .alert .alert-icon { color: var(--danger); flex: none; margin-top: 2px; }
+  .alert .alert-body { flex: 1; min-width: 0; }
+  .alert .alert-title { font-weight: 700; }
+  .alert .alert-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .alert ul { margin: 4px 0 0; padding-left: 20px; }
+
+  /* 설정 */
+  .settings { display: flex; flex-direction: column; gap: 24px; }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field-label { font-size: var(--fs-body); font-weight: 700; }
+  .seg {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    padding: 4px; border-radius: 12px; background: var(--bg-soft);
+  }
+  .seg button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    min-height: 44px; padding: 0 8px;
+    border: 2px solid transparent; border-radius: var(--r-sm);
+    background: transparent; color: var(--text);
+    font-weight: 500; cursor: pointer;
+    transition: background-color var(--dur) ease;
+  }
+  .seg button .check { display: none; }
+  .seg button[aria-pressed="true"] {
+    background: var(--bg); border-color: var(--text); font-weight: 700;
+  }
+  .seg button[aria-pressed="true"] .check { display: inline; }
+  .input-row { display: flex; align-items: center; gap: 8px; }
+  .input {
+    flex: 1; min-width: 0; height: 44px; padding: 0 12px;
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--bg); font-size: var(--fs-body);
+  }
+  .input::placeholder { color: var(--text-sub); }
+  .input[aria-invalid="true"] { border: 2px solid var(--danger); }
+  .unit { color: var(--text-sub); flex: none; }
+  .field-error { display: flex; gap: 4px; align-items: flex-start; }
+  .field-error:empty { display: none; }
+  .field-error svg { color: var(--danger); flex: none; margin-top: 3px; }
+  .summary { display: flex; gap: 8px; align-items: flex-start; }
+  .summary:empty { display: none; }
+  .summary svg { color: var(--success); flex: none; margin-top: 2px; }
+
+  /* 사진 목록 */
+  .list-head {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 16px;
+  }
+  .list-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .list-wrap {
+    border: 2px dashed transparent; border-radius: var(--r-card);
+    transition: border-color var(--dur) ease, background-color var(--dur) ease;
+  }
+  .list {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: 12px; grid-template-columns: 1fr;
+  }
+  @media (min-width: 600px) { .list { grid-template-columns: 1fr 1fr; } }
+  .item {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 16px; border: 1px solid var(--line); border-radius: var(--r-card);
+    background: var(--bg);
+  }
+  .item-top { display: flex; gap: 12px; align-items: flex-start; }
+  .thumb {
+    width: 72px; height: 72px; flex: none;
+    border-radius: var(--r-sm); background: var(--bg-soft);
+    object-fit: cover;
+  }
+  .item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .item-name { font-weight: 600; overflow-wrap: anywhere; word-break: break-all; }
+  .status { display: flex; gap: 4px; align-items: flex-start; font-size: var(--fs-small); color: var(--text); }
+  .status svg { flex: none; margin-top: 2px; }
+  .status.done svg { color: var(--success); }
+  .status.fail svg { color: var(--danger); }
+  .status.wait svg { color: var(--text-sub); }
+  .item .btn-sub { width: 100%; }
+
+  .visually-hidden {
+    position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+    .btn:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>사진 형식 바꾸기</h1>
+    <p class="lead">사진은 이 기기 안에서만 바꿔요. 어디로도 보내지 않아요.</p>
+  </header>
+
+  <input id="fileInput" class="visually-hidden" type="file" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+
+  <main id="layout" class="layout">
+    <!-- 설정 -->
+    <section class="card settings" id="settings" aria-labelledby="settingsTitle" hidden>
+      <h2 id="settingsTitle">어떻게 바꿀까요</h2>
+
+      <div class="field">
+        <span class="field-label" id="formatLabel">바꿀 형식</span>
+        <div class="seg" role="group" aria-labelledby="formatLabel" id="formatGroup">
+          <button type="button" data-format="jpeg" aria-pressed="true"><svg class="check" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>JPG</button>
+          <button type="button" data-format="png" aria-pressed="false"><svg class="check" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>PNG</button>
+          <button type="button" data-format="webp" aria-pressed="false"><svg class="check" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>WebP</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="widthInput">가로 크기</label>
+        <div class="input-row">
+          <input id="widthInput" class="input" type="text" inputmode="numeric" autocomplete="off" placeholder="원래 크기" aria-describedby="widthHint widthError">
+          <span class="unit">픽셀</span>
+        </div>
+        <p class="small" id="widthHint">비워 두면 원래 크기 그대로예요. 세로는 비율에 맞춰 줄어요.</p>
+        <p class="small field-error" id="widthError" aria-live="assertive"></p>
+      </div>
+
+      <div class="field">
+        <button type="button" class="btn btn-primary" id="convertBtn">사진 바꾸기</button>
+        <p class="summary" id="summary" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- 사진 -->
+    <section id="photos" aria-labelledby="photosTitle">
+      <div id="uploadError" aria-live="assertive"></div>
+
+      <div class="empty" id="empty">
+        <div class="icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10" r="2" fill="currentColor"/><path d="M4 18l5-5 4 4 3-3 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </div>
+        <h2 id="photosTitle">바꿀 사진을 올려 주세요</h2>
+        <p class="lead">사진을 여기에 끌어다 놓아도 돼요. 여러 장도 한 번에 올릴 수 있어요.</p>
+        <button type="button" class="btn btn-primary" data-pick>사진 고르기</button>
+      </div>
+
+      <div class="list-wrap" id="listWrap" hidden>
+        <div class="list-head">
+          <h2 id="listTitle">올린 사진</h2>
+          <div class="list-actions">
+            <button type="button" class="btn btn-sub" data-pick>사진 더 올리기</button>
+            <button type="button" class="btn btn-sub" id="clearBtn">모두 빼기</button>
+          </div>
+        </div>
+        <ul class="list" id="list" aria-labelledby="listTitle"></ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var FORMATS = {
+    jpeg: { label: 'JPG', ext: 'jpg', mime: 'image/jpeg' },
+    png:  { label: 'PNG', ext: 'png', mime: 'image/png' },
+    webp: { label: 'WebP', ext: 'webp', mime: 'image/webp' }
+  };
+  var MAX_WIDTH = 20000;
+
+  var ICON = {
+    done: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    fail: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M8 4.5v4.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="11.3" r="1" fill="#fff"/></svg>',
+    wait: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.8V8l2 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    close: '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    download: '<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10m0 0l-4-4m4 4l4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    alert: '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.3" fill="#fff"/></svg>',
+    small: '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M8 4.5v4.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="11.3" r="1" fill="#fff"/></svg>'
+  };
+
+  var state = { items: [], format: 'jpeg', running: false };
+  var seq = 0;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var fileInput = $('fileInput');
+  var layout = $('layout');
+  var settings = $('settings');
+  var empty = $('empty');
+  var listWrap = $('listWrap');
+  var list = $('list');
+  var listTitle = $('listTitle');
+  var uploadError = $('uploadError');
+  var widthInput = $('widthInput');
+  var widthError = $('widthError');
+  var convertBtn = $('convertBtn');
+  var summary = $('summary');
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function baseName(name) {
+    var i = name.lastIndexOf('.');
+    return i > 0 ? name.slice(0, i) : name;
+  }
+  function isImage(file) {
+    if (file.type) return file.type.indexOf('image/') === 0;
+    return /\.(jpe?g|png|webp|gif|bmp|avif|svg|ico|heic|heif|tiff?)$/i.test(file.name);
+  }
+
+  /* ---------- 파일 올리기 ---------- */
+  function pickFiles() { fileInput.value = ''; fileInput.click(); }
+  document.querySelectorAll('[data-pick]').forEach(function (b) { b.addEventListener('click', pickFiles); });
+  fileInput.addEventListener('change', function () { addFiles(fileInput.files); });
+
+  function addFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    var rejected = [];
+    clearUploadError();
+    files.forEach(function (file) {
+      if (!isImage(file)) { rejected.push(file.name); return; }
+      var item = {
+        id: ++seq, file: file, name: file.name,
+        url: URL.createObjectURL(file),
+        w: 0, h: 0, status: 'loading', message: '',
+        resultUrl: null, outName: '', outW: 0, outH: 0
+      };
+      state.items.push(item);
+      createCard(item);
+      loadInfo(item);
+    });
+    if (rejected.length) showUploadError(rejected);
+    if (files.length > rejected.length) summary.innerHTML = '';
+    refreshLayout();
+  }
+
+  function loadInfo(item) {
+    var img = new Image();
+    img.onload = function () {
+      item.w = img.naturalWidth; item.h = img.naturalHeight;
+      item.status = item.w && item.h ? 'ready' : 'broken';
+      updateCard(item);
+    };
+    img.onerror = function () { item.status = 'broken'; updateCard(item); };
+    img.src = item.url;
+  }
+
+  function showUploadError(names) {
+    var listHtml = names.slice(0, 5).map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('');
+    if (names.length > 5) listHtml += '<li>그 밖에 ' + (names.length - 5) + '개</li>';
+    uploadError.innerHTML =
+      '<div class="alert">' +
+        '<span class="alert-icon">' + ICON.alert + '</span>' +
+        '<div class="alert-body">' +
+          '<p class="alert-title">사진 파일만 올릴 수 있어요</p>' +
+          '<p>아래 파일은 사진이 아니어서 빼 두었어요.</p>' +
+          '<ul>' + listHtml + '</ul>' +
+          '<p>JPG, PNG, WebP 같은 사진을 다시 골라 주세요.</p>' +
+          '<div class="alert-actions">' +
+            '<button type="button" class="btn btn-sub" data-repick>사진 다시 고르기</button>' +
+            '<button type="button" class="btn btn-sub" data-close>닫기</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    uploadError.querySelector('[data-repick]').addEventListener('click', pickFiles);
+    uploadError.querySelector('[data-close]').addEventListener('click', clearUploadError);
+  }
+  function clearUploadError() { uploadError.innerHTML = ''; }
+
+  /* 끌어다 놓기: 화면 어디에 놓아도 받아요 */
+  var dragDepth = 0;
+  function hasFiles(e) {
+    var t = e.dataTransfer && e.dataTransfer.types;
+    return t && Array.prototype.indexOf.call(t, 'Files') !== -1;
+  }
+  document.addEventListener('dragenter', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth++; document.body.classList.add('dragging');
+  });
+  document.addEventListener('dragover', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+  });
+  document.addEventListener('dragleave', function () {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) document.body.classList.remove('dragging');
+  });
+  document.addEventListener('drop', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+    addFiles(e.dataTransfer.files);
+  });
+
+  /* ---------- 카드 ---------- */
+  function createCard(item) {
+    var li = document.createElement('li');
+    li.className = 'item';
+    li.id = 'item-' + item.id;
+    li.innerHTML =
+      '<div class="item-top">' +
+        '<img class="thumb" alt="" src="' + item.url + '">' +
+        '<div class="item-info">' +
+          '<p class="item-name"></p>' +
+          '<p class="small dims"></p>' +
+          '<p class="status" role="status"></p>' +
+        '</div>' +
+        '<button type="button" class="btn btn-icon remove"></button>' +
+      '</div>' +
+      '<button type="button" class="btn btn-sub download" hidden>' + ICON.download + '<span>내려받기</span></button>';
+    li.querySelector('.item-name').textContent = item.name;
+    var rm = li.querySelector('.remove');
+    rm.innerHTML = ICON.close;
+    rm.setAttribute('aria-label', item.name + ' 빼기');
+    rm.addEventListener('click', function () { removeItem(item); });
+    li.querySelector('.download').addEventListener('click', function () { download(item); });
+    list.appendChild(li);
+    item.el = li;
+    updateCard(item);
+  }
+
+  function updateCard(item) {
+    var el = item.el; if (!el) return;
+    var dims = el.querySelector('.dims');
+    var st = el.querySelector('.status');
+    var dl = el.querySelector('.download');
+    dims.textContent = item.w ? '지금 크기: 가로 ' + item.w + ' × 세로 ' + item.h : '';
+    var cls = 'wait', icon = ICON.wait, text = '';
+    switch (item.status) {
+      case 'loading': text = '사진을 읽는 중이에요'; break;
+      case 'ready': text = '아직 안 바꿨어요'; break;
+      case 'working': text = '바꾸는 중이에요'; break;
+      case 'done':
+        cls = 'done'; icon = ICON.done;
+        text = FORMATS[item.doneFormat].label + '로 바꿨어요. 가로 ' + item.outW + ' × 세로 ' + item.outH;
+        break;
+      case 'broken':
+        cls = 'fail'; icon = ICON.fail;
+        text = '이 사진은 열 수 없어요. 파일이 망가졌거나 이 브라우저가 읽지 못하는 사진이에요. 다른 사진을 올려 주세요.';
+        break;
+      case 'fail':
+        cls = 'fail'; icon = ICON.fail;
+        text = item.message;
+        break;
+    }
+    st.className = 'status ' + cls;
+    st.innerHTML = icon + '<span></span>';
+    st.lastChild.textContent = text;
+    dl.hidden = item.status !== 'done';
+    if (item.status === 'done') dl.setAttribute('aria-label', item.outName + ' 내려받기');
+  }
+
+  function removeItem(item) {
+    var idx = state.items.indexOf(item);
+    if (idx === -1) return;
+    revokeResult(item);
+    URL.revokeObjectURL(item.url);
+    item.el.remove();
+    state.items.splice(idx, 1);
+    refreshLayout();
+    var next = state.items[idx] || state.items[idx - 1];
+    if (next) next.el.querySelector('.remove').focus();
+    else empty.querySelector('[data-pick]').focus();
+  }
+
+  $('clearBtn').addEventListener('click', function () {
+    state.items.slice().forEach(function (item) {
+      revokeResult(item); URL.revokeObjectURL(item.url); item.el.remove();
+    });
+    state.items = [];
+    summary.innerHTML = '';
+    refreshLayout();
+    empty.querySelector('[data-pick]').focus();
+  });
+
+  function revokeResult(item) {
+    if (item.resultUrl) { URL.revokeObjectURL(item.resultUrl); item.resultUrl = null; }
+  }
+
+  function refreshLayout() {
+    var has = state.items.length > 0;
+    settings.hidden = !has;
+    listWrap.hidden = !has;
+    empty.hidden = has;
+    layout.classList.toggle('has-items', has);
+    listTitle.textContent = '올린 사진 ' + state.items.length + '장';
+  }
+
+  /* ---------- 설정 ---------- */
+  var segButtons = document.querySelectorAll('#formatGroup button');
+  segButtons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (state.running) return;
+      state.format = b.getAttribute('data-format');
+      segButtons.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      markStale();
+    });
+  });
+
+  function readWidth() {
+    var raw = widthInput.value.trim().replace(/,/g, '');
+    if (raw === '') return { ok: true, value: 0 };
+    if (!/^\d+$/.test(raw)) return { ok: false, msg: '가로 크기에는 숫자만 넣을 수 있어요. 예를 들어 1200처럼 넣어 주세요.' };
+    var n = parseInt(raw, 10);
+    if (n < 1) return { ok: false, msg: '가로 크기는 1보다 커야 해요. 1 이상의 숫자를 넣어 주세요.' };
+    if (n > MAX_WIDTH) return { ok: false, msg: '가로 크기가 너무 커요. ' + MAX_WIDTH + ' 이하로 넣어 주세요.' };
+    return { ok: true, value: n };
+  }
+  function showWidthError(msg) {
+    if (msg) {
+      widthInput.setAttribute('aria-invalid', 'true');
+      widthError.innerHTML = ICON.small + '<span></span>';
+      widthError.lastChild.textContent = msg;
+    } else {
+      widthInput.removeAttribute('aria-invalid');
+      widthError.innerHTML = '';
+    }
+  }
+  widthInput.addEventListener('input', function () {
+    var r = readWidth();
+    showWidthError(r.ok ? '' : r.msg);
+    markStale();
+  });
+
+  function markStale() {
+    var changed = false;
+    state.items.forEach(function (item) {
+      if (item.status === 'done' || item.status === 'fail') {
+        revokeResult(item); item.status = 'ready'; changed = true; updateCard(item);
+      }
+    });
+    if (changed) {
+      summary.innerHTML = '';
+      summary.textContent = '바꾸는 방법이 달라졌어요. 사진 바꾸기를 다시 눌러 주세요.';
+    }
+  }
+
+  /* ---------- 바꾸기 ---------- */
+  convertBtn.addEventListener('click', function () {
+    if (state.running) return;
+    var r = readWidth();
+    if (!r.ok) { showWidthError(r.msg); widthInput.focus(); return; }
+    runAll(r.value);
+  });
+
+  function setRunning(on) {
+    state.running = on;
+    convertBtn.setAttribute('aria-disabled', String(on));
+    convertBtn.textContent = on ? '바꾸는 중이에요' : '사진 바꾸기';
+  }
+
+  async function runAll(targetW) {
+    var targets = state.items.filter(function (i) { return i.status === 'ready' || i.status === 'done' || i.status === 'fail'; });
+    if (!targets.length) {
+      summary.textContent = state.items.length ? '바꿀 수 있는 사진이 없어요. 다른 사진을 올려 주세요.' : '';
+      return;
+    }
+    setRunning(true);
+    summary.innerHTML = '';
+    var okCount = 0;
+    for (var k = 0; k < targets.length; k++) {
+      var item = targets[k];
+      if (state.items.indexOf(item) === -1) continue;
+      revokeResult(item);
+      item.status = 'working'; updateCard(item);
+      try {
+        await convertOne(item, targetW, state.format);
+        item.status = 'done'; okCount++;
+      } catch (err) {
+        item.status = 'fail';
+        item.message = err && err.userMessage ? err.userMessage :
+          '이 사진은 바꾸지 못했어요. 사진이 너무 크거나 망가졌을 수 있어요. 가로 크기를 줄이거나 다른 사진으로 해 보세요.';
+      }
+      updateCard(item);
+      await new Promise(function (res) { setTimeout(res, 0); });
+    }
+    setRunning(false);
+    var failCount = targets.length - okCount;
+    if (okCount) {
+      summary.innerHTML = ICON.done + '<span></span>';
+      summary.lastChild.textContent = okCount + '장을 바꿨어요. 사진마다 내려받기를 눌러 주세요.' +
+        (failCount ? ' ' + failCount + '장은 바꾸지 못했어요.' : '');
+    } else {
+      summary.textContent = '사진을 바꾸지 못했어요. 사진마다 적힌 내용을 확인해 주세요.';
+    }
+  }
+
+  function loadImage(url) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  async function convertOne(item, targetW, formatKey) {
+    var fmt = FORMATS[formatKey];
+    var img = await loadImage(item.url);
+    var sw = img.naturalWidth, sh = img.naturalHeight;
+    var w = sw, h = sh;
+    if (targetW && targetW < sw) {
+      w = targetW;
+      h = Math.max(1, Math.round(sh * targetW / sw));
+    }
+
+    // 많이 줄일 때는 반씩 나눠 줄여서 더 또렷하게 만들어요
+    var src = img, cw = sw, ch = sh;
+    while (cw / 2 >= w && cw > 2) {
+      var step = document.createElement('canvas');
+      step.width = Math.max(1, Math.round(cw / 2));
+      step.height = Math.max(1, Math.round(ch / 2));
+      var sctx = step.getContext('2d');
+      sctx.imageSmoothingEnabled = true; sctx.imageSmoothingQuality = 'high';
+      sctx.drawImage(src, 0, 0, step.width, step.height);
+      src = step; cw = step.width; ch = step.height;
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('canvas');
+    if (fmt.mime === 'image/jpeg') {
+      // JPG는 투명한 부분을 담지 못해서 흰색으로 채워요
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(src, 0, 0, w, h);
+
+    var blob = await new Promise(function (res) { canvas.toBlob(res, fmt.mime, 0.92); });
+    if (!blob) throw new Error('blob');
+    if (blob.type !== fmt.mime) {
+      var e = new Error('unsupported');
+      e.userMessage = '이 브라우저는 ' + fmt.label + '로 바꿀 수 없어요. 다른 형식을 고르거나 다른 브라우저로 열어 주세요.';
+      throw e;
+    }
+    item.resultUrl = URL.createObjectURL(blob);
+    item.outName = baseName(item.name) + '.' + fmt.ext;
+    item.outW = w; item.outH = h;
+    item.doneFormat = formatKey;
+  }
+
+  function download(item) {
+    if (!item.resultUrl) return;
+    var a = document.createElement('a');
+    a.href = item.resultUrl;
+    a.download = item.outName;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  refreshLayout();
+})();
+</script>
+</body>
+</html>
